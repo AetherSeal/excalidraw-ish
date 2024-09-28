@@ -1,7 +1,7 @@
 export default function Header() {
   return (
     <header className="flex flex-row p-4 bg-slate-800 justify-between">
-      <h1>Cavas</h1>
+      <h1>Canvas</h1>
       <nav>
         <ul className="flex flex-row gap-4">
           <li>

@@ -1,18 +1,16 @@
 "use client";
-import { TOOLS } from "@/utils/constants";
-import { Actions, Tool } from "@/utils/types";
+import { Actions } from "@/utils/types";
 import React, { use, useEffect, useRef, useState } from "react";
-import ToolButton from "./toolButton";
-import ColorPicker from "./colorPicker";
+import ToolPanel from "./tools/toolPanel";
+import { useCanvasContext } from "@/hooks/canvasHooks";
 
 export default function Canvas() {
-  const [currentTool, setCurrentTool] = useState<Tool>();
-  const [currentColor, setCurrentColor] = useState("black");
+  const { currentTool, setCurrentTool, currentColor, currentSize, isFilled } =
+    useCanvasContext();
+
   const [currentText, setCurrentText] = useState("");
-  const [currentSize, setSize] = useState(1);
   const [isDrawing, setIsDrawing] = useState(false);
   const [action, setAction] = useState<Actions>("drawing");
-  const [isFilled, setIsFilled] = useState(true);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -35,14 +33,6 @@ export default function Canvas() {
     contextRef.current = context;
     return () => {};
   }, []);
-  //   useEffect(() => {
-  //     if (!textAreaRef.current) return;
-  //     if (action === "writing") {
-  //       const textArea = textAreaRef.current;
-  //       debugger;
-  //       textArea.focus();
-  //     }
-  //   }, [action]);
 
   const handleStartDraw = (
     event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
@@ -71,6 +61,10 @@ export default function Canvas() {
     setIsDrawing(true);
     if (currentTool === "text") {
       setAction("writing");
+      if (!textAreaRef.current) return;
+      const textArea = textAreaRef.current;
+      textArea.style.top = startYRef.current + "px";
+      textArea.style.left = startXRef.current + "px";
     }
   };
   const handleDraw = (
@@ -218,58 +212,52 @@ export default function Canvas() {
         smudgeSize
       );
     }
-    if (currentTool === "text") {
-      contextRef.current.globalCompositeOperation = "source-over";
-      contextRef.current.font = `${currentSize * 2}px Arial`;
-      contextRef.current.fillStyle = currentColor;
-      contextRef.current.fillText(currentText, offsetX, offsetY);
-      contextRef.current?.closePath();
-      setIsDrawing(false);
-    }
   };
   const handleStopDraw = () => {
     if (action === "writing") {
       if (!textAreaRef.current) return;
       const textArea = textAreaRef.current;
-      textArea.style.top = startYRef.current + "px";
-      textArea.style.left = startXRef.current + "px";
       textArea.focus();
+      return;
     }
-    if (action === "writing") return;
     contextRef.current?.closePath();
     setIsDrawing(false);
   };
-
-  //   Controls
-  const renderTextArea = () => {
-    if (action === "writing") {
-      return (
-        <textarea
-          ref={textAreaRef}
-          value={currentText}
-          onChange={(event) => setCurrentText(event.target.value)}
-          className="absolute text-black"
-        ></textarea>
+  const handlePressEnter = (
+    event: React.KeyboardEvent<HTMLTextAreaElement>
+  ) => {
+    if (event.key === "Enter") {
+      setAction("drawing");
+      console.log("enter");
+      if (!contextRef.current) return;
+      contextRef.current.globalCompositeOperation = "source-over";
+      contextRef.current.font = `${currentSize * 2}px Arial`;
+      contextRef.current.fillStyle = currentColor;
+      contextRef.current.fillText(
+        currentText,
+        startXRef.current,
+        startYRef.current
       );
+      contextRef.current?.closePath();
+      setIsDrawing(false);
+      setCurrentText("");
     }
   };
-  const renderTools = () => {
-    return TOOLS.map((currentTool) => {
-      return (
-        <ToolButton
-          type={currentTool}
-          setCurrentTool={(tool) => {
-            setCurrentTool(tool);
-            setAction("drawing");
-          }}
-          key={currentTool}
-        ></ToolButton>
-      );
-    });
+  //   Controls
+  const renderTextArea = () => {
+    return (
+      <textarea
+        ref={textAreaRef}
+        value={currentText}
+        onChange={(event) => setCurrentText(event.target.value)}
+        onKeyDown={handlePressEnter}
+        className={`absolute text-black ${
+          action === "writing" ? "block" : "hidden"
+        }`}
+      ></textarea>
+    );
   };
-  const handleSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSize(parseInt(event.target.value));
-  };
+
   // clear canvas
   const clearCanvas = () => {
     if (!contextRef.current) return;
@@ -284,33 +272,7 @@ export default function Canvas() {
 
   return (
     <section className="bg-blue-400">
-      <h1>current tool: {currentTool}</h1>
-      <h2>current color: {currentColor}</h2>
-      <h2>current size: {currentSize}</h2>
       <section>
-        <label htmlFor="size">Size {currentSize}</label>
-        <input
-          type="range"
-          name="size"
-          id="size"
-          value={currentSize}
-          min={0}
-          max={50}
-          onChange={handleSizeChange}
-        />
-        <label htmlFor="filled">Fill</label>
-        <input
-          type="checkbox"
-          name="filled"
-          id="filled"
-          checked={isFilled}
-          onChange={() => setIsFilled(!isFilled)}
-        />
-        <ColorPicker
-          setCurrentColor={setCurrentColor}
-          currentColor={currentColor}
-        />
-        setAction
         <button
           onClick={() => {
             setCurrentTool("text");
@@ -319,7 +281,7 @@ export default function Canvas() {
           Text
         </button>
         <button onClick={clearCanvas}>clear</button>
-        {renderTools()}
+        <ToolPanel />
       </section>
       <div className="relative">
         {renderTextArea()}

@@ -1,6 +1,6 @@
-import { Actions, Tool } from "./types";
+import { Actions, TTool } from "./types";
 
-export const TOOLS: Tool[] = [
+export const TOOLS: TTool[] = [
   "draw",
   "erase",
   "ellipse",
