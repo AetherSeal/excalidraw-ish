@@ -14,7 +14,7 @@ export default function ColorPicker({
 
   return (
     <label htmlFor="color">
-      Primary
+      Color
       <input
         type="color"
         name=""

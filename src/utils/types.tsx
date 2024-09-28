@@ -4,4 +4,8 @@ export type Tool =
   | "ellipse"
   | "text"
   | "rectangle"
-  | "clear";
+  | "smudge"
+  | "line"
+  | "triangle";
+
+export type Actions = "drawing" | "writing";
