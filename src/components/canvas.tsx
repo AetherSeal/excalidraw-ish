@@ -1,7 +1,8 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ToolPanel from "./tools/toolPanel";
 import { useCanvasContext } from "@/hooks/canvasHooks";
+import { CiUndo, CiRedo } from "react-icons/ci";
 
 export default function Canvas() {
   const {
@@ -15,6 +16,8 @@ export default function Canvas() {
     setCurrentText,
     action,
     setAction,
+    history,
+    setHistory,
   } = useCanvasContext();
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -23,6 +26,7 @@ export default function Canvas() {
   const snapshotRef = useRef<ImageData | null>(null);
   const startXRef = useRef(0);
   const startYRef = useRef(0);
+  const historyIndex = useRef<number | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -37,7 +41,6 @@ export default function Canvas() {
     if (!context) return;
     // context.scale(2, 2);
     contextRef.current = context;
-    return () => {};
   }, []);
 
   useEffect(() => {
@@ -67,6 +70,9 @@ export default function Canvas() {
       canvasRef.current.width,
       canvasRef.current.height
     );
+    // history--------------------
+    setHistory([...history, snapshotRef.current]);
+    //----------------------------
     // set the start point for the rectangle or ellipse
     startXRef.current = offsetX;
     startYRef.current = offsetY;
@@ -263,20 +269,49 @@ export default function Canvas() {
       setCurrentText("");
     }
   };
+  const handleUndo = () => {
+    if (historyIndex.current === null) {
+      historyIndex.current = history.length - 1;
+    }
+    if (historyIndex.current > 0) {
+      historyIndex.current--;
+      const previousSnapshot = history[historyIndex.current];
+      if (previousSnapshot && contextRef.current) {
+        contextRef.current.putImageData(previousSnapshot, 0, 0);
+      }
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex.current === null) return;
+    if (historyIndex.current < history.length - 1) {
+      historyIndex.current++;
+      const nextSnapshot = history[historyIndex.current];
+      if (nextSnapshot && contextRef.current) {
+        contextRef.current.putImageData(nextSnapshot, 0, 0);
+      }
+    }
+  };
 
   return (
     <section>
       <section>
         <ToolPanel />
         <button
-          onClick={() => {
-            if (!snapshotRef.current) return;
-            if (!contextRef.current) return;
-            contextRef.current.putImageData(snapshotRef.current, 0, 0);
-          }}
+          onClick={() => handleUndo()}
+          className={`fixed p-2 bg-slate-700 text-white rounded ${
+            history.length ? "" : "bottom-[-100px]"
+          } transition-all bottom-4 left-4 z-10 hover:scale-110 active:scale-105`}
         >
-          {" "}
-          undo{" "}
+          <CiUndo />
+        </button>
+        <button
+          onClick={() => handleRedo()}
+          className={`fixed p-2 bg-slate-700 text-white rounded ${
+            history.length ? "" : "bottom-[-100px]"
+          } transition-all bottom-4 left-14 z-10 hover:scale-110 active:scale-105`}
+        >
+          <CiRedo />
         </button>
       </section>
       <div className="relative">

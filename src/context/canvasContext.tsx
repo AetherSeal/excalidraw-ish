@@ -1,5 +1,5 @@
 import { Actions, TTool } from "@/utils/types";
-import React, { createContext, useState } from "react";
+import React, { createContext, useRef, useState } from "react";
 
 type TCanvasContext = {
   currentTool: TTool;
@@ -16,6 +16,9 @@ type TCanvasContext = {
   setAction: React.Dispatch<React.SetStateAction<Actions>>;
   isFilled: boolean;
   setIsFilled: React.Dispatch<React.SetStateAction<boolean>>;
+  history: ImageData[];
+  setHistory: React.Dispatch<React.SetStateAction<ImageData[]>>;
+  historyIndex: React.MutableRefObject<number | null>;
 };
 type TCanvasContextProviderProps = {
   children: React.ReactNode;
@@ -32,6 +35,9 @@ export const CanvasContextProvider = ({
   const [isDrawing, setIsDrawing] = useState(false);
   const [action, setAction] = useState<Actions>("drawing");
   const [isFilled, setIsFilled] = useState(true);
+  const [history, setHistory] = useState<ImageData[]>([]);
+  const historyIndex = useRef(null);
+
   return (
     <CanvasContext.Provider
       value={{
@@ -49,6 +55,9 @@ export const CanvasContextProvider = ({
         setAction,
         isFilled,
         setIsFilled,
+        history,
+        setHistory,
+        historyIndex,
       }}
     >
       {children}
