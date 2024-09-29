@@ -1,20 +1,7 @@
 export default function Header() {
   return (
-    <header className="flex flex-row p-4 bg-slate-800 justify-between">
-      <h1>Canvas</h1>
-      <nav>
-        <ul className="flex flex-row gap-4">
-          <li>
-            <a href="#">Home</a>
-          </li>
-          <li>
-            <a href="#">About</a>
-          </li>
-          <li>
-            <a href="#">Contact</a>
-          </li>
-        </ul>
-      </nav>
+    <header className="absolute h-[1px] w-[1px] overflow-hidden">
+      <h1>Canvas Excalidraw(ish)</h1>
     </header>
   );
 }

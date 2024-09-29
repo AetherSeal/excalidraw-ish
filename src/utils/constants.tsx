@@ -8,6 +8,8 @@ export const TOOLS: TTool[] = [
   "smudge",
   "line",
   "triangle",
+  "text",
+  "clear",
 ];
 
 export const COLORS = [

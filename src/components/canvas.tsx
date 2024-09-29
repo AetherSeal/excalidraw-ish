@@ -1,16 +1,22 @@
 "use client";
-import { Actions } from "@/utils/types";
-import React, { use, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import ToolPanel from "./tools/toolPanel";
 import { useCanvasContext } from "@/hooks/canvasHooks";
 
 export default function Canvas() {
-  const { currentTool, setCurrentTool, currentColor, currentSize, isFilled } =
-    useCanvasContext();
+  const {
+    currentTool,
+    currentColor,
+    currentSize,
+    isFilled,
+    isDrawing,
+    setIsDrawing,
+    currentText,
+    setCurrentText,
+    action,
+    setAction,
+  } = useCanvasContext();
 
-  const [currentText, setCurrentText] = useState("");
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [action, setAction] = useState<Actions>("drawing");
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -33,6 +39,20 @@ export default function Canvas() {
     contextRef.current = context;
     return () => {};
   }, []);
+
+  useEffect(() => {
+    if (currentTool === "clear") {
+      if (!contextRef.current) return;
+      if (!canvasRef.current) return;
+      contextRef.current.clearRect(
+        0,
+        0,
+        canvasRef.current.width,
+        canvasRef.current.height
+      );
+      return;
+    }
+  }, [currentTool]);
 
   const handleStartDraw = (
     event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
@@ -243,48 +263,32 @@ export default function Canvas() {
       setCurrentText("");
     }
   };
-  //   Controls
-  const renderTextArea = () => {
-    return (
-      <textarea
-        ref={textAreaRef}
-        value={currentText}
-        onChange={(event) => setCurrentText(event.target.value)}
-        onKeyDown={handlePressEnter}
-        className={`absolute text-black ${
-          action === "writing" ? "block" : "hidden"
-        }`}
-      ></textarea>
-    );
-  };
-
-  // clear canvas
-  const clearCanvas = () => {
-    if (!contextRef.current) return;
-    if (!canvasRef.current) return;
-    contextRef.current.clearRect(
-      0,
-      0,
-      canvasRef.current.width,
-      canvasRef.current.height
-    );
-  };
 
   return (
-    <section className="bg-blue-400">
+    <section>
       <section>
+        <ToolPanel />
         <button
           onClick={() => {
-            setCurrentTool("text");
+            if (!snapshotRef.current) return;
+            if (!contextRef.current) return;
+            contextRef.current.putImageData(snapshotRef.current, 0, 0);
           }}
         >
-          Text
+          {" "}
+          undo{" "}
         </button>
-        <button onClick={clearCanvas}>clear</button>
-        <ToolPanel />
       </section>
       <div className="relative">
-        {renderTextArea()}
+        <textarea
+          ref={textAreaRef}
+          value={currentText}
+          onChange={(event) => setCurrentText(event.target.value)}
+          onKeyDown={handlePressEnter}
+          className={`absolute text-black p-2 ${
+            action === "writing" ? "block" : "hidden"
+          }`}
+        ></textarea>
         <canvas
           ref={canvasRef}
           onMouseDown={handleStartDraw}

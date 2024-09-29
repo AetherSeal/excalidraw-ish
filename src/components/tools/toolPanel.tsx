@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useCanvasContext } from "@/hooks/canvasHooks";
 import { TOOLS } from "@/utils/constants";
 import { TTool } from "@/utils/types";
@@ -10,14 +10,19 @@ import {
   IoBrushOutline,
 } from "react-icons/io5";
 import { BsEraser } from "react-icons/bs";
-import { CiRuler, CiText } from "react-icons/ci";
+import { CiRuler, CiText, CiTrash } from "react-icons/ci";
+import { TbBackground } from "react-icons/tb";
+import { FaSquareFull } from "react-icons/fa";
 
 export default function ToolPanel() {
   return (
     <section>
-      <ColorPicker />
-      <SizeBar />
-      <FillCheckbox />
+      <div className="flex flex-col fixed top-1/2 -translate-y-1/2 left-4 z-10 bg-slate-700 max-w-24 rounded-lg p-4">
+        <DefaultColors />
+        <ColorPicker />
+        <SizeBar />
+      </div>
+
       <ToolButtons />
     </section>
   );
@@ -25,18 +30,23 @@ export default function ToolPanel() {
 
 function ColorPicker() {
   const { setCurrentColor, currentColor } = useCanvasContext();
+  useEffect(() => {
+    console.log(currentColor);
+  }, [currentColor]);
+
   const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setCurrentColor(event.target.value);
   };
   return (
     <label htmlFor="color">
-      Color
+      <p className="text-xs">Color</p>
       <input
         type="color"
         name=""
         id="color"
         onChange={handleColorChange}
         value={currentColor}
+        className="w-full rounded bg-transparent  hover:scale-110"
       />
     </label>
   );
@@ -48,7 +58,7 @@ function SizeBar() {
   };
   return (
     <label htmlFor="size">
-      Size {currentSize}
+      <p className="text-xs capitalize"> Size {currentSize}px</p>
       <input
         type="range"
         name="size"
@@ -57,26 +67,34 @@ function SizeBar() {
         min={0}
         max={50}
         onChange={handleSizeChange}
+        className="w-full  hover:scale-110"
       />
     </label>
   );
 }
 function FillCheckbox() {
   const { isFilled, setIsFilled } = useCanvasContext();
-  const handleFillChange = () => {
-    setIsFilled((prev) => !prev);
-  };
   return (
-    <label htmlFor="fill">
-      Fill
-      <input
-        type="checkbox"
-        name="fill"
-        id="fill"
-        checked={isFilled}
-        onChange={handleFillChange}
-      />
-    </label>
+    <>
+      <button
+        className={` text-white p-2 rounded hover:bg-slate-600 ${
+          !isFilled ? "bg-gray-500" : ""
+        }`}
+        onClick={() => setIsFilled(false)}
+        role="button"
+      >
+        <TbBackground />
+      </button>
+      <button
+        className={` text-white p-2 rounded hover:bg-slate-600 ${
+          isFilled ? "bg-gray-500" : ""
+        }`}
+        onClick={() => setIsFilled(true)}
+        role="button"
+      >
+        <FaSquareFull />
+      </button>
+    </>
   );
 }
 function ToolButtons() {
@@ -85,7 +103,13 @@ function ToolButtons() {
       return <ToolButton type={currentTool} key={currentTool}></ToolButton>;
     });
   };
-  return <div>{renderButtons()}</div>;
+  return (
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 p-4 bg-slate-700 rounded-md flex flex-wrap gap-2 items-center justify-center z-10">
+      {renderButtons()}
+      <div className="bg-slate-500 w-[1px] h-6 "></div>
+      <FillCheckbox />
+    </div>
+  );
 }
 function ToolButton({ type }: { type: TTool }) {
   const { currentTool, setCurrentTool } = useCanvasContext();
@@ -110,19 +134,88 @@ function ToolButton({ type }: { type: TTool }) {
         return <IoBrushOutline />;
       case "text":
         return <CiText />;
+      case "clear":
+        return <CiTrash />;
       default:
         return type;
     }
   };
   return (
     <button
-      className={`bg-red-700 text-white p-2 mx-2 ${
-        type === currentTool ? "ring-2 ring-yellow-500" : ""
+      className={` text-white p-2 rounded hover:bg-slate-600 ${
+        type === currentTool ? "bg-gray-500" : ""
       }`}
       onClick={handleClick}
       role="button"
     >
       {handleIcon()}
     </button>
+  );
+}
+function DefaultColors() {
+  const { setCurrentColor } = useCanvasContext();
+  return (
+    <div className="flex flex-wrap gap-2">
+      <button
+        onClick={() => {
+          setCurrentColor("#000000");
+        }}
+        className="bg-black w-4 h-4 rounded hover:scale-110"
+      ></button>
+      <button
+        onClick={() => {
+          setCurrentColor("#ffffff");
+        }}
+        className="bg-white w-4 h-4 rounded hover:scale-110"
+      ></button>
+      <button
+        onClick={() => {
+          setCurrentColor("#ff0000");
+        }}
+        className="bg-red-500 w-4 h-4 rounded hover:scale-110"
+      ></button>
+      <button
+        onClick={() => {
+          setCurrentColor("#00ff00");
+        }}
+        className="bg-green-500 w-4 h-4 rounded hover:scale-110"
+      ></button>
+      <button
+        onClick={() => {
+          setCurrentColor("#0000ff");
+        }}
+        className="bg-blue-500 w-4 h-4 rounded hover:scale-110"
+      ></button>
+      <button
+        onClick={() => {
+          setCurrentColor("#ffff00");
+        }}
+        className="bg-yellow-500 w-4 h-4 rounded hover:scale-110"
+      ></button>
+      <button
+        onClick={() => {
+          setCurrentColor("#ffa500");
+        }}
+        className="bg-orange-500 w-4 h-4 rounded hover:scale-110"
+      ></button>
+      <button
+        onClick={() => {
+          setCurrentColor("#800080");
+        }}
+        className="bg-purple-500 w-4 h-4 rounded hover:scale-110"
+      ></button>
+      <button
+        onClick={() => {
+          setCurrentColor("#ff69b4");
+        }}
+        className="bg-pink-500 w-4 h-4 rounded hover:scale-110"
+      ></button>
+      <button
+        onClick={() => {
+          setCurrentColor("#a52a2a");
+        }}
+        className="bg-brown-500 w-4 h-4 rounded hover:scale-110"
+      ></button>
+    </div>
   );
 }
