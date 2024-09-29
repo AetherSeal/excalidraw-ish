@@ -33,7 +33,6 @@ The primary motivation behind these choices was to enable fast development. Tail
 In the canvas implementation of the paint feature, I have included the following tools:
 
 - **HTML5 Canvas**: Utilized for rendering the drawing area.
-- **Fabric.js**: A powerful and simple JavaScript HTML5 canvas library that provides an interactive object model on top of the canvas element.
 
 ### State Management
 
