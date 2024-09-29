@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import ToolPanel from "./tools/toolPanel";
 import { useCanvasContext } from "@/hooks/canvasHooks";
-import { CiUndo, CiRedo } from "react-icons/ci";
+import { CiUndo, CiRedo, CiSaveDown2 } from "react-icons/ci";
 
 export default function Canvas() {
   const {
@@ -18,6 +18,7 @@ export default function Canvas() {
     setAction,
     history,
     setHistory,
+    historyIndex,
   } = useCanvasContext();
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -26,7 +27,6 @@ export default function Canvas() {
   const snapshotRef = useRef<ImageData | null>(null);
   const startXRef = useRef(0);
   const startYRef = useRef(0);
-  const historyIndex = useRef<number | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -292,7 +292,15 @@ export default function Canvas() {
       }
     }
   };
-
+  const saveCanvasAsImage = () => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const image = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = image;
+    link.download = "canvas.png";
+    link.click();
+  };
   return (
     <section>
       <section>
@@ -312,6 +320,14 @@ export default function Canvas() {
           } transition-all bottom-4 left-14 z-10 hover:scale-110 active:scale-105`}
         >
           <CiRedo />
+        </button>
+        <button
+          onClick={() => saveCanvasAsImage()}
+          className={`fixed p-2 bg-slate-700 text-white rounded ${
+            history.length ? "" : "bottom-[-100px]"
+          } transition-all bottom-4 left-24 z-10 hover:scale-110 active:scale-105`}
+        >
+          <CiSaveDown2 />
         </button>
       </section>
       <div className="relative">

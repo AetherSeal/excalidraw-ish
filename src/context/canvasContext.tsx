@@ -36,7 +36,7 @@ export const CanvasContextProvider = ({
   const [action, setAction] = useState<Actions>("drawing");
   const [isFilled, setIsFilled] = useState(true);
   const [history, setHistory] = useState<ImageData[]>([]);
-  const historyIndex = useRef(null);
+  const historyIndex = useRef<number | null>(null);
 
   return (
     <CanvasContext.Provider
