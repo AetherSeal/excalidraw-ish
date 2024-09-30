@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useCanvasContext } from "@/hooks/canvasHooks";
 import { TOOLS } from "@/utils/constants";
 import { TTool } from "@/utils/types";
@@ -29,7 +29,6 @@ export default function ToolPanel() {
         <ColorPicker />
         <SizeBar />
       </div>
-
       <ToolButtons />
       <UndoButton />
       <RedoButton />
@@ -231,55 +230,33 @@ function DefaultColors() {
   );
 }
 function UndoButton() {
-  const { history, historyIndex, contextRef } = useCanvasContext();
-  const handleUndo = () => {
-    if (historyIndex.current === null) {
-      historyIndex.current = history.length - 1;
-    }
-    if (historyIndex.current > 0) {
-      historyIndex.current--;
-      const previousSnapshot = history[historyIndex.current];
-      if (previousSnapshot && contextRef.current) {
-        contextRef.current.putImageData(previousSnapshot, 0, 0);
-      }
-    }
-  };
+  const { undo, undoStack } = useCanvasContext();
   return (
     <button
-      onClick={() => handleUndo()}
+      onClick={() => undo()}
       className={`fixed p-2 bg-slate-700 text-white rounded ${
-        history.length ? "" : "bottom-[-100px]"
-      } transition-all bottom-4 left-4 z-10 hover:scale-110 active:scale-105`}
+        undoStack.length ? "" : "bottom-[-100px]"
+      } transition-all bottom-4 left-14 z-10 hover:scale-110 active:scale-105`}
     >
       <CiUndo />
     </button>
   );
 }
 function RedoButton() {
-  const { history, historyIndex, contextRef } = useCanvasContext();
-  const handleRedo = () => {
-    if (historyIndex.current === null) return;
-    if (historyIndex.current < history.length - 1) {
-      historyIndex.current++;
-      const nextSnapshot = history[historyIndex.current];
-      if (nextSnapshot && contextRef.current) {
-        contextRef.current.putImageData(nextSnapshot, 0, 0);
-      }
-    }
-  };
+  const { redo, redoStack } = useCanvasContext();
   return (
     <button
-      onClick={() => handleRedo()}
+      onClick={() => redo()}
       className={`fixed p-2 bg-slate-700 text-white rounded ${
-        history.length ? "" : "bottom-[-100px]"
-      } transition-all bottom-4 left-14 z-10 hover:scale-110 active:scale-105`}
+        redoStack.length ? "" : "bottom-[-100px]"
+      } transition-all bottom-4 left-24 z-10 hover:scale-110 active:scale-105`}
     >
       <CiRedo />
     </button>
   );
 }
 function SaveButton() {
-  const { canvasRef, history } = useCanvasContext();
+  const { canvasRef } = useCanvasContext();
   const saveCanvasAsImage = () => {
     if (!canvasRef.current) return;
     const canvas = canvasRef.current;
@@ -293,8 +270,8 @@ function SaveButton() {
     <button
       onClick={() => saveCanvasAsImage()}
       className={`fixed p-2 bg-slate-700 text-white rounded ${
-        history.length ? "" : "bottom-[-100px]"
-      } transition-all bottom-4 left-24 z-10 hover:scale-110 active:scale-105`}
+        true ? "" : "bottom-[-100px]"
+      } transition-all bottom-4 left-4 z-10 hover:scale-110 active:scale-105`}
     >
       <CiSaveDown2 />
     </button>

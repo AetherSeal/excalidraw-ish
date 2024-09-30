@@ -22,6 +22,7 @@ export default function Canvas() {
     textareaPrint,
     beginDrawing,
     endDrawing,
+    saveState,
   } = useCanvasContext();
 
   useCanvasSetup();
@@ -30,6 +31,7 @@ export default function Canvas() {
     event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
   ) => {
     beginDrawing(event);
+    saveState();
   };
   const handleDraw = (
     event: React.MouseEvent<HTMLCanvasElement, MouseEvent>

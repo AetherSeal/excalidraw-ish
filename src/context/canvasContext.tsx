@@ -16,17 +16,9 @@ type TCanvasContext = {
   setAction: React.Dispatch<React.SetStateAction<Actions>>;
   isFilled: boolean;
   setIsFilled: React.Dispatch<React.SetStateAction<boolean>>;
-  history: ImageData[];
-  setHistory: React.Dispatch<React.SetStateAction<ImageData[]>>;
-  historyIndex: React.MutableRefObject<number | null>;
   textAreaRef: React.MutableRefObject<HTMLTextAreaElement | null>;
   canvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
   contextRef: React.MutableRefObject<CanvasRenderingContext2D | null>;
-  snapshotRef: React.MutableRefObject<ImageData | null>;
-  startXRef: React.MutableRefObject<number>;
-  startYRef: React.MutableRefObject<number>;
-  endXRef: React.MutableRefObject<number>;
-  endYRef: React.MutableRefObject<number>;
   drawLine: () => void;
   drawRectangle: () => void;
   drawEllipse: () => void;
@@ -34,14 +26,7 @@ type TCanvasContext = {
   drawStraightLine: () => void;
   erase: () => void;
   eraseSmudge: () => void;
-  takeSnapshot: () => void;
-  contextSetup: () => void;
-  textareaSetup: () => void;
-  textareaFocus: () => void;
   textareaPrint: () => void;
-  startPointSetup: (
-    event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
-  ) => void;
   endPointSetup: (
     event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
   ) => void;
@@ -49,6 +34,11 @@ type TCanvasContext = {
     event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
   ) => void;
   endDrawing: () => void;
+  undo: () => void;
+  redo: () => void;
+  saveState: () => void;
+  undoStack: string[];
+  redoStack: string[];
 };
 type TCanvasContextProviderProps = {
   children: React.ReactNode;
@@ -65,8 +55,8 @@ export const CanvasContextProvider = ({
   const [isDrawing, setIsDrawing] = useState(false);
   const [action, setAction] = useState<Actions>("drawing");
   const [isFilled, setIsFilled] = useState(true);
-  const [history, setHistory] = useState<ImageData[]>([]);
-  const historyIndex = useRef<number | null>(null);
+  const [undoStack, setUndoStack] = useState<string[]>([]);
+  const [redoStack, setRedoStack] = useState<string[]>([]);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -76,6 +66,78 @@ export const CanvasContextProvider = ({
   const endXRef = useRef(0);
   const endYRef = useRef(0);
 
+  const saveState = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const dataURL = canvas.toDataURL();
+      // Save the current state to the undo stack and add the current state to the undo stack
+      setUndoStack((prevUndoStack) => [...prevUndoStack, dataURL]);
+      // Clear redo stack when a new action is made
+      setRedoStack([]);
+    }
+  };
+  const undo = () => {
+    // Check if there are any saved states in the undo stack
+    if (undoStack.length > 0) {
+      // Get the last state from the undo stack
+      const lastState = undoStack[undoStack.length - 1];
+      // Remove the last state from the undo stack
+      setUndoStack((prevUndoStack) => prevUndoStack.slice(0, -1));
+      // Add the last state to the redo stack
+      setRedoStack((prevRedoStack) => [
+        ...prevRedoStack,
+        canvasRef.current?.toDataURL() || "",
+      ]);
+      // Create a new image element
+      const img = new Image();
+      // Set the source of the image to the last state
+      img.src = lastState;
+      // When the image is loaded
+      img.onload = () => {
+        // Get the canvas and context element
+        const canvas = canvasRef.current;
+        const ctx = contextRef.current;
+        // If the canvas and context exist
+        if (ctx && canvas) {
+          // Clear the canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          // Draw the image on the canvas
+          ctx.drawImage(img, 0, 0);
+        }
+      };
+    }
+  };
+  const redo = () => {
+    // Check if there are any saved states in the redo stack
+    if (redoStack.length > 0) {
+      // Get the last state from the redo stack
+      const lastState = redoStack[redoStack.length - 1];
+      // Remove the last state from the redo stack
+      setRedoStack((prevRedoStack) => prevRedoStack.slice(0, -1));
+      // Add the last state to the undo stack
+      setUndoStack((prevUndoStack) => [
+        ...prevUndoStack,
+        canvasRef.current?.toDataURL() || "",
+      ]);
+      // Create a new image element
+      const img = new Image();
+      // Set the source of the image to the last state
+      img.src = lastState;
+      // When the image is loaded
+      img.onload = () => {
+        // Get the canvas and context element
+        const canvas = canvasRef.current;
+        const ctx = contextRef.current;
+        // If the canvas and context exist
+        if (ctx && canvas) {
+          // Clear the canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          // Draw the image on the canvas
+          ctx.drawImage(img, 0, 0);
+        }
+      };
+    }
+  };
   const beginDrawing = (
     event: React.MouseEvent<HTMLCanvasElement, MouseEvent>
   ) => {
@@ -162,8 +224,6 @@ export const CanvasContextProvider = ({
       canvasRef.current.width,
       canvasRef.current.height
     );
-    // history--------------------
-    setHistory([...history, snapshotRef.current]);
   };
   const drawLine = () => {
     if (!contextRef.current) return;
@@ -330,17 +390,9 @@ export const CanvasContextProvider = ({
         setAction,
         isFilled,
         setIsFilled,
-        history,
-        setHistory,
-        historyIndex,
         textAreaRef,
         canvasRef,
         contextRef,
-        snapshotRef,
-        startXRef,
-        startYRef,
-        endXRef,
-        endYRef,
         drawLine,
         drawRectangle,
         drawEllipse,
@@ -348,15 +400,15 @@ export const CanvasContextProvider = ({
         drawStraightLine,
         erase,
         eraseSmudge,
-        takeSnapshot,
-        contextSetup,
-        textareaSetup,
-        textareaFocus,
         textareaPrint,
-        startPointSetup,
         endPointSetup,
         beginDrawing,
         endDrawing,
+        undo,
+        redo,
+        saveState,
+        undoStack,
+        redoStack,
       }}
     >
       {children}
