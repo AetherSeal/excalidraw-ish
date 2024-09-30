@@ -10,7 +10,14 @@ import {
   IoBrushOutline,
 } from "react-icons/io5";
 import { BsEraser } from "react-icons/bs";
-import { CiRuler, CiText, CiTrash } from "react-icons/ci";
+import {
+  CiRuler,
+  CiText,
+  CiTrash,
+  CiUndo,
+  CiRedo,
+  CiSaveDown2,
+} from "react-icons/ci";
 import { TbBackground } from "react-icons/tb";
 import { FaSquareFull } from "react-icons/fa";
 
@@ -24,6 +31,9 @@ export default function ToolPanel() {
       </div>
 
       <ToolButtons />
+      <UndoButton />
+      <RedoButton />
+      <SaveButton />
     </section>
   );
 }
@@ -112,9 +122,10 @@ function ToolButtons() {
   );
 }
 function ToolButton({ type }: { type: TTool }) {
-  const { currentTool, setCurrentTool } = useCanvasContext();
+  const { currentTool, setCurrentTool, setAction } = useCanvasContext();
   const handleClick = () => {
     setCurrentTool(type);
+    setAction("drawing");
   };
   const handleIcon = () => {
     switch (type) {
@@ -217,5 +228,75 @@ function DefaultColors() {
         className="bg-brown-500 w-4 h-4 rounded hover:scale-110"
       ></button>
     </div>
+  );
+}
+function UndoButton() {
+  const { history, historyIndex, contextRef } = useCanvasContext();
+  const handleUndo = () => {
+    if (historyIndex.current === null) {
+      historyIndex.current = history.length - 1;
+    }
+    if (historyIndex.current > 0) {
+      historyIndex.current--;
+      const previousSnapshot = history[historyIndex.current];
+      if (previousSnapshot && contextRef.current) {
+        contextRef.current.putImageData(previousSnapshot, 0, 0);
+      }
+    }
+  };
+  return (
+    <button
+      onClick={() => handleUndo()}
+      className={`fixed p-2 bg-slate-700 text-white rounded ${
+        history.length ? "" : "bottom-[-100px]"
+      } transition-all bottom-4 left-4 z-10 hover:scale-110 active:scale-105`}
+    >
+      <CiUndo />
+    </button>
+  );
+}
+function RedoButton() {
+  const { history, historyIndex, contextRef } = useCanvasContext();
+  const handleRedo = () => {
+    if (historyIndex.current === null) return;
+    if (historyIndex.current < history.length - 1) {
+      historyIndex.current++;
+      const nextSnapshot = history[historyIndex.current];
+      if (nextSnapshot && contextRef.current) {
+        contextRef.current.putImageData(nextSnapshot, 0, 0);
+      }
+    }
+  };
+  return (
+    <button
+      onClick={() => handleRedo()}
+      className={`fixed p-2 bg-slate-700 text-white rounded ${
+        history.length ? "" : "bottom-[-100px]"
+      } transition-all bottom-4 left-14 z-10 hover:scale-110 active:scale-105`}
+    >
+      <CiRedo />
+    </button>
+  );
+}
+function SaveButton() {
+  const { canvasRef, history } = useCanvasContext();
+  const saveCanvasAsImage = () => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const image = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = image;
+    link.download = "canvas.png";
+    link.click();
+  };
+  return (
+    <button
+      onClick={() => saveCanvasAsImage()}
+      className={`fixed p-2 bg-slate-700 text-white rounded ${
+        history.length ? "" : "bottom-[-100px]"
+      } transition-all bottom-4 left-24 z-10 hover:scale-110 active:scale-105`}
+    >
+      <CiSaveDown2 />
+    </button>
   );
 }
