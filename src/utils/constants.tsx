@@ -10,6 +10,7 @@ export const TOOLS: TTool[] = [
   "triangle",
   "text",
   "clear",
+  "star",
 ];
 
 export const COLORS = [

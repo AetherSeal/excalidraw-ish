@@ -16,6 +16,7 @@ export default function Canvas() {
     drawEllipse,
     drawTriangle,
     drawStraightLine,
+    drawStar,
     erase,
     eraseSmudge,
     endPointSetup,
@@ -61,6 +62,9 @@ export default function Canvas() {
         break;
       case "smudge":
         eraseSmudge();
+        break;
+      case "star":
+        drawStar();
         break;
     }
   };

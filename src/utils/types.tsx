@@ -7,6 +7,7 @@ export type TTool =
   | "smudge"
   | "line"
   | "triangle"
-  | "clear";
+  | "clear"
+  | "star";
 
 export type Actions = "drawing" | "writing";

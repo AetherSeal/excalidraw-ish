@@ -23,6 +23,7 @@ type TCanvasContext = {
   drawRectangle: () => void;
   drawEllipse: () => void;
   drawTriangle: () => void;
+  drawStar: () => void;
   drawStraightLine: () => void;
   erase: () => void;
   eraseSmudge: () => void;
@@ -315,6 +316,67 @@ export const CanvasContextProvider = ({
     // Stroke the triangle
     contextRef.current.stroke();
   };
+  // This function should be called during mouse move event
+  const drawStar = () => {
+    const mouseX = endXRef.current;
+    const mouseY = endYRef.current;
+    if (!snapshotRef.current || !contextRef.current) return;
+
+    // Calculate the distance between the starting point and current mouse position
+    const dx = mouseX - startXRef.current;
+    const dy = mouseY - startYRef.current;
+    const distance = Math.sqrt(dx * dy + dy * dy);
+
+    // Dynamically set the outer and inner radii based on the distance
+    const outerRadius = distance; // Outer radius grows as the mouse moves farther
+    const innerRadius = outerRadius / 2; // Inner radius can be half the outer radius for a star look
+
+    // Number of spikes
+    const spikes = 8; // Keep this as 5, or allow it to be dynamic if needed
+
+    // Reset the rotation and step angle for star calculation
+    let rot = (Math.PI / 2) * 3; // Start rotation, pointing upward
+    const step = Math.PI / spikes; // Angle between spikes
+
+    // Set the composite operation and clear the canvas using snapshot
+    contextRef.current.globalCompositeOperation = "source-over";
+    contextRef.current.putImageData(snapshotRef.current, 0, 0);
+
+    // Begin drawing the star
+    contextRef.current.beginPath();
+    contextRef.current.moveTo(
+      startXRef.current,
+      startYRef.current - outerRadius
+    ); // Start at the top point
+
+    // Loop through each spike and inner point to create the star shape
+    for (let i = 0; i < spikes; i++) {
+      // Outer point of the star
+      let x = startXRef.current + Math.cos(rot) * outerRadius;
+      let y = startYRef.current + Math.sin(rot) * outerRadius;
+      contextRef.current.lineTo(x, y); // Draw to outer point
+      rot += step; // Increment angle for inner point
+
+      // Inner point of the star
+      x = startXRef.current + Math.cos(rot) * innerRadius;
+      y = startYRef.current + Math.sin(rot) * innerRadius;
+      contextRef.current.lineTo(x, y); // Draw to inner point
+      rot += step; // Increment angle for the next spike
+    }
+
+    contextRef.current.closePath(); // Close the path
+
+    // If the star should be filled
+    if (isFilled) {
+      contextRef.current.fillStyle = currentColor; // Set the fill color
+      contextRef.current.fill(); // Fill the star
+    }
+
+    // Draw the outline (stroke)
+    contextRef.current.strokeStyle = currentColor; // Set stroke color
+    contextRef.current.stroke(); // Apply the stroke
+  };
+
   const drawStraightLine = () => {
     if (!snapshotRef.current) return;
     if (!contextRef.current) return;
@@ -397,6 +459,7 @@ export const CanvasContextProvider = ({
         drawRectangle,
         drawEllipse,
         drawTriangle,
+        drawStar,
         drawStraightLine,
         erase,
         eraseSmudge,
